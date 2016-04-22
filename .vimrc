@@ -14,7 +14,7 @@ set noshiftround
 " Color scheme (terminal)
 set t_Co=256
 set background=dark
-colorscheme molokai
+" colorscheme molokai
 
 " Remap save
 " inoremap <esc> <esc>:w<cr>
