@@ -1,6 +1,5 @@
 # Path to your oh-my-zsh installation.
 export ZSH=/Users/machen/.oh-my-zsh
-export HOMEBREW_CASK_OPTS="--appdir=/Applications"
 
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
