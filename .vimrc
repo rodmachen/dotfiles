@@ -9,15 +9,19 @@ if !filereadable(vundle_readme)
   let iCanHazVundle=0
 endif
 set nocompatible
-filetype off
 set rtp+=~/.vim/bundle/vundle/
 call vundle#rc()
+
+filetype off
 Plugin 'gmarik/vundle'
 Plugin 'scrooloose/nerdtree'
 Plugin 'Raimondi/delimitMate'
 Plugin 'SirVer/ultisnips'
 Plugin 'scrooloose/syntastic'
 Plugin 'molokai'
+Plugin 'honza/vim-snippets'
+Plugin 'tpope/vim-commentary'
+Plugin 'ervandew/supertab'
 filetype plugin indent on
 
 " Encoding
