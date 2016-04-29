@@ -22,6 +22,7 @@ Plugin 'molokai'
 Plugin 'honza/vim-snippets'
 Plugin 'tpope/vim-commentary'
 Plugin 'ervandew/supertab'
+Plugin 'tpope/vim-surround'
 filetype plugin indent on
 
 " Encoding
@@ -72,7 +73,7 @@ let mapleader = ","
 map <Leader><space> :nohl<cr>
 
 " Don't scroll off the edge of the page
-set scrolloff=10
+set scrolloff=20
 
 " Blink cursor on error instead of beeping (grr)
 set visualbell
