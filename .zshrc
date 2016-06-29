@@ -1,5 +1,5 @@
 # Path to your oh-my-zsh installation.
-export ZSH=/Users/machen/.oh-my-zsh
+export ZSH=/Users/rodmachen/.oh-my-zsh
 
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
@@ -86,10 +86,10 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias zs="source ~/.zshrc"
 alias sz="subl ~/.zshrc"
-alias rdm="cd /Users/machen/Dropbox/code/projects/rodmachen.com"
-alias cdm="cd /Users/machen/Dropbox/code/projects/rodmachen.com/code.rodmachen.com"
-alias pdm="cd /Users/machen/Dropbox/code/projects/rodmachen.com/photo.rodmachen.com"
-alias rd="cd /Users/machen/Dropbox/code/projects/rodneydean.org"
+alias rdm="cd /Users/rodmachen/Dropbox/code/projects/rodmachen.com"
+alias cdm="cd /Users/rodmachen/Dropbox/code/projects/rodmachen.com/code.rodmachen.com"
+alias pdm="cd /Users/rodmachen/Dropbox/code/projects/rodmachen.com/photo.rodmachen.com"
+alias rd="cd /Users/rodmachen/Dropbox/code/projects/rodneydean.org"
 alias sp="s3_website push"
 alias s.="subl . --command toggle_full_screen"
 # alias ga="git add ."
@@ -109,9 +109,10 @@ alias gprm="git pull --rebase upstream master"
 alias gpom="git push origin master"
 alias vim="/Applications/MacVim.app/Contents/MacOS/Vim"
 alias vg="valgrind --tool=memcheck --leak-check=yes --show-reachable=yes --num-callers=20 --track-fds=yes"
+alias gn="geeknote show \"*\""
 
 stty -ixon
 
 export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
 
-cd ~/Dropbox/pilytix/pilytix-code
+cd ~/Dropbox/code

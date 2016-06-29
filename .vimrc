@@ -23,6 +23,7 @@ Plugin 'honza/vim-snippets'
 Plugin 'tpope/vim-commentary'
 Plugin 'ervandew/supertab'
 Plugin 'tpope/vim-surround'
+Plugin 'neilagabriel/vim-geeknote'
 filetype plugin indent on
 
 " Encoding
