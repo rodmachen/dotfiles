@@ -1,3 +1,12 @@
+# ----- Birdhouse Bootstrapper
+
+# Should come first in your /Users/rmachen/.zshrc so it can be overridden.
+# if test -L ~/.birdhouse/birdhouse_loader; then
+#     source ~/.birdhouse/birdhouse_loader "/Users/rmachen/local-code/homeaway/birdhouse/lib" "/Users/rmachen/.zshrc"
+# fi
+
+# ----- Birdhouse Bootstrapper
+
 # Path to your oh-my-zsh installation.
 export ZSH=/Users/rmachen/.oh-my-zsh
 
@@ -5,7 +14,9 @@ export ZSH=/Users/rmachen/.oh-my-zsh
 # Look in ~/.oh-my-zsh/themes/
 # Optionally, if you set this to "random", it'll load a random theme each
 # time that oh-my-zsh is loaded.
-ZSH_THEME="risto"
+# ZSH_THEME="risto"
+# risto theme with blue and green swapped
+ZSH_THEME="rodsto"
 
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
