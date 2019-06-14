@@ -68,6 +68,7 @@ export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/share/npm/b
 # export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 # export MANPATH="/usr/local/man:$MANPATH"
 #PATH=$PATH:/usr/local/bin/; export PATH
+eval "$(rbenv init -)"
 
 source $ZSH/oh-my-zsh.sh
 
@@ -132,12 +133,18 @@ alias nrst="npm run start:dev"
 alias nrsp="npm run stop:dev"
 alias grom="git rebase origin/master"
 alias rake='noglob rake'
+alias mci="mvn clean install -DskipTests"
+alias mcit="mvn clean install"
+alias mct="mvn clean test"
+alias audio="sudo kextunload /System/Library/Extensions/AppleHDA.kext;sudo kextload /System/Library/Extensions/AppleHDA.kext"
+alias mcis='mci && ./start.sh'
+alias mcic='mvn test jacoco:report'
 
 stty -ixon
 
 export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
 export NPM_TOKEN=ed58743d-77c1-4438-b4b4-f1c73ec3d947
-# cd ~/local-code
+# cd ~/local-code/homeaway
 
 function code {
     if [[ $# = 0 ]]
@@ -149,3 +156,4 @@ function code {
         open -a "Visual Studio Code" "$argPath"
     fi
 }
+# echo source $HOME/.bash_profile_bootstrap
