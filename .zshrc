@@ -139,6 +139,7 @@ alias mct="mvn clean test"
 alias audio="sudo kextunload /System/Library/Extensions/AppleHDA.kext;sudo kextload /System/Library/Extensions/AppleHDA.kext"
 alias mcis='mci && ./start.sh'
 alias mcic='mvn test jacoco:report'
+alias chmd='chmod +x'
 
 stty -ixon
 
