@@ -1,0 +1,13 @@
+brew "git"
+brew "nvm"
+brew "postgresql@17", restart_service: :changed
+vscode "anthropic.claude-code"
+vscode "astro-build.astro-vscode"
+vscode "christian-kohler.npm-intellisense"
+vscode "databricks.neon-local-connect"
+vscode "dbaeumer.vscode-eslint"
+vscode "esbenp.prettier-vscode"
+vscode "kumar-harsh.graphql-for-vscode"
+vscode "nonylene.dark-molokai-theme"
+vscode "xabikos.javascriptsnippets"
+vscode "zainchen.json"
