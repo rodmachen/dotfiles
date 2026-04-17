@@ -1,0 +1,7 @@
+{
+  "fixture": "plan-complete.md",
+  "total_steps": 3,
+  "completed_steps": 3,
+  "next_step": null,
+  "status": "complete"
+}

@@ -1,0 +1,7 @@
+{
+  "fixture": "plan-unstarted.md",
+  "total_steps": 4,
+  "completed_steps": 0,
+  "next_step": "Step 1",
+  "status": "not-started"
+}

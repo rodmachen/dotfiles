@@ -1,0 +1,7 @@
+{
+  "fixture": "plan-partial.md",
+  "total_steps": 7,
+  "completed_steps": 3,
+  "next_step": "Step 3",
+  "status": "in-progress"
+}

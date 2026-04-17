@@ -1,0 +1,7 @@
+{
+  "fixture": "plan-hygiene.md",
+  "total_steps": 5,
+  "completed_steps": 4,
+  "next_step": "Step 3",
+  "status": "in-progress"
+}

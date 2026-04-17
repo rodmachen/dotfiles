@@ -110,6 +110,10 @@ symlink "$DOTFILES_DIR/.zshrc"             "$HOME/.zshrc"
 symlink "$DOTFILES_DIR/.gitconfig"         "$HOME/.gitconfig"
 symlink "$DOTFILES_DIR/.gitignore_global"  "$HOME/.gitignore_global"
 
+# Claude Code skills
+mkdir -p "$HOME/.claude/skills"
+symlink "$DOTFILES_DIR/.claude/skills/work-log" "$HOME/.claude/skills/work-log"
+
 # SSH config (create .ssh dir if needed, don't overwrite keys)
 mkdir -p "$HOME/.ssh"
 chmod 700 "$HOME/.ssh"
