@@ -105,12 +105,15 @@ scan_repo() {
     behind=0
   fi
 
-  # Dirty flag
-  local dirty
-  if [[ -n "$(git -C "$dir" status --porcelain 2>/dev/null)" ]]; then
+  # Dirty flag + count
+  local dirty_files dirty dirty_count
+  dirty_files=$(git -C "$dir" status --porcelain 2>/dev/null)
+  if [[ -n "$dirty_files" ]]; then
     dirty=true
+    dirty_count=$(printf '%s\n' "$dirty_files" | wc -l | tr -d ' ')
   else
     dirty=false
+    dirty_count=0
   fi
 
   # Open PRs (gh optional; empty array on any failure)
@@ -126,15 +129,16 @@ scan_repo() {
   plans_json=$(collect_plans "$dir")
 
   jq -n \
-    --arg     name      "$name"       \
-    --arg     branch    "$branch"     \
-    --argjson ahead     "$ahead"      \
-    --argjson behind    "$behind"     \
-    --argjson dirty     "$dirty"      \
-    --argjson open_prs  "$open_prs"   \
-    --argjson plans     "$plans_json" \
+    --arg     name        "$name"        \
+    --arg     branch      "$branch"      \
+    --argjson ahead       "$ahead"       \
+    --argjson behind      "$behind"      \
+    --argjson dirty       "$dirty"       \
+    --argjson dirty_count "$dirty_count" \
+    --argjson open_prs    "$open_prs"    \
+    --argjson plans       "$plans_json"  \
     '{name:$name, branch:$branch, ahead:$ahead, behind:$behind,
-      dirty:$dirty, open_prs:$open_prs, plans:$plans}'
+      dirty:$dirty, dirty_count:$dirty_count, open_prs:$open_prs, plans:$plans}'
 }
 
 main() {
