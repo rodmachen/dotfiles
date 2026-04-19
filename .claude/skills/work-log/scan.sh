@@ -2,8 +2,9 @@
 # scan.sh — scan git repos under DIR and emit JSON work-log data
 # Usage: scan.sh [DIR [REPO_FILTER]]
 # Output: JSON array, one object per git repo found in DIR's immediate children
-#   { name, branch, ahead, behind, dirty, open_prs, plans[] }
+#   { name, branch, ahead, behind, dirty, dirty_count, open_prs, plans[], archives }
 # Each plans[] element: { file, total_steps, completed_steps, next_step, status }
+# archives: { moved:[{file,date},...], skipped:[{file,reason},...] }
 # Requires: git, jq, python3; gh is optional (degrades gracefully)
 
 set -uo pipefail
@@ -82,6 +83,99 @@ collect_plans() {
   fi
 }
 
+# Emit one filename per line for plan files whose parsed status is "complete".
+detect_complete_plans() {
+  local repo_dir="$1"
+  local plans_dir="$repo_dir/docs/plans"
+  [[ -d "$plans_dir" ]] || return 0
+
+  while IFS= read -r -d '' plan_file; do
+    local parsed status
+    parsed=$(parse_plan "$plan_file") || continue
+    [[ -z "$parsed" ]] && continue
+    status=$(printf '%s' "$parsed" | jq -r '.status // "unknown"' 2>/dev/null)
+    if [[ "$status" == "complete" ]]; then
+      basename "$plan_file"
+    fi
+  done < <(find "$plans_dir" -maxdepth 1 -name "*.md" -print0 2>/dev/null | sort -z)
+}
+
+# Archive newly-complete plans in the given repo under docs/plans/archive/.
+# Args: repo_dir, branch, pre_archive_dirty_porcelain
+# Guardrails: skip if on main/master; skip if plan file is dirty pre-archive;
+#             skip if archive target already exists.
+# Honors WORKLOG_DRYRUN=1 (records intent; no disk writes).
+# Output: JSON object {moved:[...], skipped:[...]}
+archive_complete_plans() {
+  local repo_dir="$1"
+  local branch="$2"
+  local pre_dirty_files="$3"
+
+  local today
+  today=$(date +%Y-%m-%d)
+
+  # Whether the repo is on a protected branch (constant for this invocation)
+  local on_protected=false
+  [[ "$branch" == "main" || "$branch" == "master" ]] && on_protected=true
+
+  local moved_entries=() skipped_entries=()
+
+  while IFS= read -r plan_name; do
+    [[ -z "$plan_name" ]] && continue
+
+    # Guardrail 1: repo is on main/master — don't commit-adjacent writes silently
+    if [[ "$on_protected" == "true" ]]; then
+      skipped_entries+=("$(jq -n --arg file "$plan_name" --arg reason "on $branch" \
+        '{file:$file, reason:$reason}')")
+      continue
+    fi
+
+    # Guardrail 2: plan file has pending changes — don't mix user edits with rename
+    # Use full-line matching (awk strips the 2-char porcelain status prefix + space)
+    if printf '%s\n' "$pre_dirty_files" | awk '{print substr($0,4)}' | grep -qxF "docs/plans/$plan_name"; then
+      skipped_entries+=("$(jq -n --arg file "$plan_name" \
+        '{file:$file, reason:"dirty working tree for plan file"}')")
+      continue
+    fi
+
+    # Guardrail 3: archive target already exists — avoid clobbering
+    if [[ -e "$repo_dir/docs/plans/archive/$plan_name" ]]; then
+      skipped_entries+=("$(jq -n --arg file "$plan_name" \
+        '{file:$file, reason:"archive target already exists"}')")
+      continue
+    fi
+
+    if [[ "${WORKLOG_DRYRUN:-0}" == "1" ]]; then
+      moved_entries+=("$(jq -n --arg file "$plan_name" --arg date "$today" --argjson dryrun true \
+        '{file:$file, date:$date, dryrun:$dryrun}')")
+    else
+      mkdir -p "$repo_dir/docs/plans/archive"
+      if git -C "$repo_dir" mv "docs/plans/$plan_name" "docs/plans/archive/$plan_name" 2>/dev/null; then
+        moved_entries+=("$(jq -n --arg file "$plan_name" --arg date "$today" \
+          '{file:$file, date:$date}')")
+      else
+        skipped_entries+=("$(jq -n --arg file "$plan_name" \
+          '{file:$file, reason:"git mv failed"}')")
+      fi
+    fi
+  done < <(detect_complete_plans "$repo_dir")
+
+  local moved_json skipped_json
+  if [[ ${#moved_entries[@]} -eq 0 ]]; then
+    moved_json='[]'
+  else
+    moved_json=$(printf '%s\n' "${moved_entries[@]}" | jq -s '.')
+  fi
+  if [[ ${#skipped_entries[@]} -eq 0 ]]; then
+    skipped_json='[]'
+  else
+    skipped_json=$(printf '%s\n' "${skipped_entries[@]}" | jq -s '.')
+  fi
+
+  jq -n --argjson moved "$moved_json" --argjson skipped "$skipped_json" \
+    '{moved:$moved, skipped:$skipped}'
+}
+
 # Scan a single repo directory and print a JSON object (or nothing if filtered)
 scan_repo() {
   local dir="$1"
@@ -105,12 +199,25 @@ scan_repo() {
     behind=0
   fi
 
-  # Dirty flag
-  local dirty
-  if [[ -n "$(git -C "$dir" status --porcelain 2>/dev/null)" ]]; then
+  # Dirty porcelain snapshot taken BEFORE archival — used for archive guardrails.
+  # The emitted dirty/dirty_count are re-computed AFTER archival to reflect any
+  # staged renames scan.sh itself introduced.
+  local pre_dirty_files
+  pre_dirty_files=$(git -C "$dir" status --porcelain 2>/dev/null)
+
+  # Archive complete plans (may stage git mv renames in the working tree)
+  local archives_json
+  archives_json=$(archive_complete_plans "$dir" "$branch" "$pre_dirty_files")
+
+  # Post-archive dirty flag + count
+  local dirty_files dirty dirty_count
+  dirty_files=$(git -C "$dir" status --porcelain 2>/dev/null)
+  if [[ -n "$dirty_files" ]]; then
     dirty=true
+    dirty_count=$(printf '%s\n' "$dirty_files" | wc -l | tr -d ' ')
   else
     dirty=false
+    dirty_count=0
   fi
 
   # Open PRs (gh optional; empty array on any failure)
@@ -121,20 +228,23 @@ scan_repo() {
     open_prs='[]'
   fi
 
-  # Plans
+  # Plans — archived ones are naturally excluded (find uses maxdepth 1)
   local plans_json
   plans_json=$(collect_plans "$dir")
 
   jq -n \
-    --arg     name      "$name"       \
-    --arg     branch    "$branch"     \
-    --argjson ahead     "$ahead"      \
-    --argjson behind    "$behind"     \
-    --argjson dirty     "$dirty"      \
-    --argjson open_prs  "$open_prs"   \
-    --argjson plans     "$plans_json" \
+    --arg     name        "$name"        \
+    --arg     branch      "$branch"      \
+    --argjson ahead       "$ahead"       \
+    --argjson behind      "$behind"      \
+    --argjson dirty       "$dirty"       \
+    --argjson dirty_count "$dirty_count" \
+    --argjson open_prs    "$open_prs"    \
+    --argjson plans       "$plans_json"  \
+    --argjson archives    "$archives_json" \
     '{name:$name, branch:$branch, ahead:$ahead, behind:$behind,
-      dirty:$dirty, open_prs:$open_prs, plans:$plans}'
+      dirty:$dirty, dirty_count:$dirty_count, open_prs:$open_prs,
+      plans:$plans, archives:$archives}'
 }
 
 main() {
