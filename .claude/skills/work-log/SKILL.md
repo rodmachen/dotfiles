@@ -7,7 +7,7 @@ argument-hint: "[refresh | init <repo> | note <repo> <text>]"
 
 # /work-log — Cross-Repo Work Queue
 
-You produce a ranked daily queue of actionable work across Rod's active repositories in `~/code/`. The queue is backed by per-repo state files in iCloud that also serve as the memory layer — no separate memory store.
+You produce a ranked daily queue of actionable work across Rod's active repositories in `~/code/`. The queue is backed by per-repo state files in iCloud that also serve as the memory layer — no separate memory store. Completed plans are auto-archived to `docs/plans/archive/` when detected (with guardrails: main/master repos and dirty-file repos are skipped and surfaced as hygiene items).
 
 ## Parse the argument first
 
@@ -195,6 +195,22 @@ The `refresh` sub-command skips step 2 and always runs step 3.
 
 ---
 
+## Same-day re-runs
+
+The `queue` sub-command uses a lazy-refresh cache. If `_current.md` was written on or after 06:00 America/Chicago today, re-serving the cached version is instant. Running `/work-log` multiple times before 06:00 AM CT tomorrow will all read the same snapshot.
+
+When serving from cache (not the first refresh of the day), prepend a cache-notice banner to the rendered output:
+
+```markdown
+> Cached queue from HH:MM today. Run `/work-log refresh` to rescan.
+```
+
+This notice appears only when re-serving. The banner uses the HH:MM from the cached file's original write time (extract from `_current.md` header comment or file mtime).
+
+The `refresh` sub-command always bypasses the cache and forces a full rescan. Running `/work-log refresh` multiple times on the same day will overwrite `archive/YYYY-MM-DD.md` each time (keeping one snapshot per calendar day, not per run).
+
+---
+
 ## Archive behavior
 
 - One file per day: `archive/YYYY-MM-DD.md`, created by copying `_current.md` after each write.
@@ -261,6 +277,7 @@ Raise hygiene items during the queue-refresh pass (not during `init`):
 
 - **Plan-marked-as-unmarked.** For each plan file whose status is `in-progress`, check git log for a merge commit that references the filename (`git log --all --oneline -- docs/plans/<file>`). If a PR referencing the file was merged and the plan is not `complete`, emit: `<repo> — <file>: PR #N merged but not all steps marked ✅. Clean up?`
 - **Stale linked note.** For each `## User notes` bullet across all repo state files, extract any `*.md` filename references. If the referenced plan's status is no longer `not-started` (i.e., has moved on), emit: `<repo> — user-note mentions <file> which is now <status>. Remove this note?`
+- **Plan awaiting archive.** When scan.sh detects a complete plan but skips the auto-archive due to guardrails (repo on main/master or plan file is dirty), emit: `<repo> — <file>: complete but not archived (<reason>). Fix manually.`
 
 Hygiene items are **always shown to the user** for action — never auto-deleted or auto-resolved. Show them in the `### Hygiene` section of the output.
 
