@@ -108,6 +108,37 @@ def render_by_state(repos_data):
 
     return result
 
+HYGIENE_LEGEND = (
+    "_(Hygiene = drift between git reality and plan/state metadata. "
+    "Examples: (a) PR merged for a plan step but step not marked ✅; "
+    "(b) user note references a plan that has since moved status; "
+    "(c) state file references a plan file that no longer exists on disk; "
+    "(d) plan complete but not auto-archived.)_"
+)
+
+
+def render_hygiene(repos_data):
+    """Render Hygiene section, pulling items from archives.skipped."""
+    items = []
+    for repo in repos_data:
+        archives = repo.get('archives') or {}
+        for skipped in archives.get('skipped', []):
+            reason = skipped.get('reason', 'unknown')
+            items.append(
+                f"- **{repo['name']}** — {skipped['file']}: "
+                f"complete but not archived ({reason}). Fix manually."
+            )
+
+    result = "### Hygiene\n"
+    if not items:
+        result += "_(none detected)_\n"
+    else:
+        result += HYGIENE_LEGEND + "\n"
+        for item in items:
+            result += item + "\n"
+    return result
+
+
 def render_git_status(repos_data):
     """Render Git status section (new in v2)."""
     result = "## Git status\n\n"
@@ -209,7 +240,8 @@ def main():
         output += git_status
         output += "\n"
 
-    output += "### Hygiene\n_(none detected)_\n\n"
+    output += render_hygiene(repos_data)
+    output += "\n"
     output += render_all_tracked_repos(repos_data)
 
     print(output)
