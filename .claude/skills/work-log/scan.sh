@@ -2,8 +2,9 @@
 # scan.sh — scan git repos under DIR and emit JSON work-log data
 # Usage: scan.sh [DIR [REPO_FILTER]]
 # Output: JSON array, one object per git repo found in DIR's immediate children
-#   { name, branch, ahead, behind, dirty, open_prs, plans[] }
+#   { name, branch, ahead, behind, dirty, dirty_count, open_prs, plans[], archives }
 # Each plans[] element: { file, total_steps, completed_steps, next_step, status }
+# archives: { moved:[{file,date},...], skipped:[{file,reason},...] }
 # Requires: git, jq, python3; gh is optional (degrades gracefully)
 
 set -uo pipefail
@@ -101,7 +102,8 @@ detect_complete_plans() {
 
 # Archive newly-complete plans in the given repo under docs/plans/archive/.
 # Args: repo_dir, branch, pre_archive_dirty_porcelain
-# Guardrails: skip if on main/master; skip if plan file is dirty pre-archive.
+# Guardrails: skip if on main/master; skip if plan file is dirty pre-archive;
+#             skip if archive target already exists.
 # Honors WORKLOG_DRYRUN=1 (records intent; no disk writes).
 # Output: JSON object {moved:[...], skipped:[...]}
 archive_complete_plans() {
@@ -112,22 +114,34 @@ archive_complete_plans() {
   local today
   today=$(date +%Y-%m-%d)
 
+  # Whether the repo is on a protected branch (constant for this invocation)
+  local on_protected=false
+  [[ "$branch" == "main" || "$branch" == "master" ]] && on_protected=true
+
   local moved_entries=() skipped_entries=()
 
   while IFS= read -r plan_name; do
     [[ -z "$plan_name" ]] && continue
 
     # Guardrail 1: repo is on main/master — don't commit-adjacent writes silently
-    if [[ "$branch" == "main" || "$branch" == "master" ]]; then
+    if [[ "$on_protected" == "true" ]]; then
       skipped_entries+=("$(jq -n --arg file "$plan_name" --arg reason "on $branch" \
         '{file:$file, reason:$reason}')")
       continue
     fi
 
     # Guardrail 2: plan file has pending changes — don't mix user edits with rename
-    if printf '%s\n' "$pre_dirty_files" | grep -qF "docs/plans/$plan_name"; then
+    # Use full-line matching (awk strips the 2-char porcelain status prefix + space)
+    if printf '%s\n' "$pre_dirty_files" | awk '{print substr($0,4)}' | grep -qxF "docs/plans/$plan_name"; then
       skipped_entries+=("$(jq -n --arg file "$plan_name" \
         '{file:$file, reason:"dirty working tree for plan file"}')")
+      continue
+    fi
+
+    # Guardrail 3: archive target already exists — avoid clobbering
+    if [[ -e "$repo_dir/docs/plans/archive/$plan_name" ]]; then
+      skipped_entries+=("$(jq -n --arg file "$plan_name" \
+        '{file:$file, reason:"archive target already exists"}')")
       continue
     fi
 

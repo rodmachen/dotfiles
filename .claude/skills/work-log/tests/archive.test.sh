@@ -124,6 +124,12 @@ add_plan "$SANDBOX/repo-eta" "wip.md" "$INCOMPLETE_PLAN"
 make_repo_on "repo-theta" "master"
 add_plan "$SANDBOX/repo-theta" "done.md" "$COMPLETE_PLAN"
 
+# iota: clean, feature branch, complete plan, but archive target pre-exists → skipped (collision)
+make_repo_on "repo-iota" "feature/already-done"
+add_plan "$SANDBOX/repo-iota" "done.md" "$COMPLETE_PLAN"
+mkdir -p "$SANDBOX/repo-iota/docs/plans/archive"
+cp "$SANDBOX/repo-iota/docs/plans/done.md" "$SANDBOX/repo-iota/docs/plans/archive/done.md"
+
 # --- Phase 1: Dry-run. No file moves should occur. ---
 
 echo "=== archive.test.sh ==="
@@ -152,6 +158,13 @@ assert_eq "epsilon: archives.skipped length=1 (dry-run)" \
   "1" "$(echo "$EPSILON_DRY" | jq '.archives.skipped | length')"
 assert_eq "epsilon: skipped reason mentions main" \
   "on main" "$(echo "$EPSILON_DRY" | jq -r '.archives.skipped[0].reason')"
+
+# Iota (archive target pre-exists) should be skipped even in dry-run
+IOTA_DRY=$(echo "$DRY_OUTPUT" | jq '.[] | select(.name == "repo-iota")')
+assert_eq "iota: archives.skipped length=1 (collision, dry-run)" \
+  "1" "$(echo "$IOTA_DRY" | jq '.archives.skipped | length')"
+assert_eq "iota: skipped reason=archive target already exists (dry-run)" \
+  "archive target already exists" "$(echo "$IOTA_DRY" | jq -r '.archives.skipped[0].reason')"
 
 # --- Phase 2: Live run. Deltas should actually move. ---
 
@@ -238,6 +251,21 @@ assert_eq "theta: skipped.reason=on master" \
   "on master" "$(echo "$THETA" | jq -r '.archives.skipped[0].reason')"
 assert_file_exists "theta: plan file untouched" \
   "$SANDBOX/repo-theta/docs/plans/done.md"
+
+echo ""
+echo "--- repo-iota (archive target pre-exists → skipped with specific reason) ---"
+
+IOTA=$(echo "$OUTPUT" | jq '.[] | select(.name == "repo-iota")')
+assert_eq "iota: archives.moved is empty" \
+  "0" "$(echo "$IOTA" | jq '.archives.moved | length')"
+assert_eq "iota: archives.skipped length=1" \
+  "1" "$(echo "$IOTA" | jq '.archives.skipped | length')"
+assert_eq "iota: skipped.reason=archive target already exists" \
+  "archive target already exists" "$(echo "$IOTA" | jq -r '.archives.skipped[0].reason')"
+assert_eq "iota: skipped.file=done.md" \
+  "done.md" "$(echo "$IOTA" | jq -r '.archives.skipped[0].file')"
+assert_file_exists "iota: plan file untouched at original location" \
+  "$SANDBOX/repo-iota/docs/plans/done.md"
 
 # --- Summary ---
 

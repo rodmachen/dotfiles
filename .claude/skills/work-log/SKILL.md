@@ -143,22 +143,14 @@ _(when no items detected, render only: `_(none detected)_` — omit the legend)_
 
 ## All tracked repos
 
-Authoritative index of every unfinished plan. Sorted by repo name (alphabetical). Within each repo, plans grouped by status in this order: in-progress → not-started → draft. Within each group, plans sorted alphabetically by filename. Complete plans excluded.
+Authoritative index of every unfinished plan. Sorted by repo name (alphabetical). Within each repo, plans sorted by status in this order: in-progress → not-started → draft, then alphabetically by filename. Complete plans excluded.
 
-### <repo-name-1>
-> <Purpose line — rendered only if `## Purpose` section exists in the repo state file>
-
-**In progress**
-- <plan.md> — N/M steps, next: Step X
-
-**Not started**
-- <plan.md> — M steps
-
-**Draft**
-- <plan.md> — no steps yet
-
-### <repo-name-2>
-...
+| Repository | Plan | Status | Notes |
+|---|---|---|---|
+| <repo-name> | <plan.md> | in-progress (N/M steps, next: Step X) | <Purpose line if `## Purpose` exists in state file, else blank> |
+| <repo-name> | <plan.md> | not-started (M steps) | |
+| <repo-name> | <plan.md> | draft (no steps yet) | |
+| <repo-name> | _(no active plans)_ | — | |
 ```
 
 When rendering **Git status**: include a repo if it meets any of: not on `main`/`master`, dirty working tree, or ahead of origin. Omit repos that are clean on main with zero ahead count. If no repo qualifies, omit the entire `### Git status` section.
@@ -170,7 +162,7 @@ Format each line from scan.sh fields: `branch` (string), `dirty` (boolean), `dir
 - If on main/master with no other signals, the repo is excluded entirely.
 Example: `- **repo-a** — on \`feature/foo\`, dirty (3 files), ahead 2`
 
-When rendering **All tracked repos**: every repo that passes the inclusion rule (see above) AND has at least one non-complete plan must appear. Each plan gets its own line — never collapse multiple plans into one row. Repos with only pre-plans or no plans (dirty-only, open-PR-only) are listed with a one-liner: `_(no active plans)_`.
+When rendering **All tracked repos**: every repo that passes the inclusion rule (see above) AND has at least one non-complete plan must appear. Render as a Markdown table with columns: **Repository**, **Plan**, **Status**, **Notes**. Each plan gets its own row — never collapse multiple plans into one row. Repos with only pre-plans or no plans (dirty-only, open-PR-only) get a single row with `_(no active plans)_` in the Plan column and `—` in Status. The Notes column shows the repo's Purpose line if one exists in its state file; otherwise leave blank.
 
 Replace `<root>/_current.md` with the rendered output. After writing, copy it to `archive/YYYY-MM-DD.md` via Bash `cp` (see Lazy refresh step 3e).
 
@@ -189,7 +181,7 @@ On the **queue** sub-command (empty `$ARGUMENTS`):
    b. For each included repo, ensure `<root>/repos/<name>.md` exists; if not, create it via the init procedure. Update the skill-managed sections (Current state, Active plans, Completed plans). **Never touch the `## User notes` section.**
    c. Rank items using the rubric above.
    d. Render the queue to `_current.md` via `mcp__markdown-notes__save_file` with `mode: "overwrite"`.
-   e. Copy the newly-written file to the archive: `cp ~/Library/Mobile\ Documents/com~apple~CloudDocs/markdown-notes/work-log/_current.md ~/Library/Mobile\ Documents/com~apple~CloudDocs/markdown-notes/work-log/archive/YYYY-MM-DD.md` (substitute today's date). `cp` overwrites by default, so a same-day re-run just replaces the snapshot.
+   e. Copy the newly-written file to the archive: `cp ~/Library/Mobile\ Documents/com~apple~CloudDocs/folio/markdown-notes/work-log/_current.md ~/Library/Mobile\ Documents/com~apple~CloudDocs/folio/markdown-notes/work-log/archive/YYYY-MM-DD.md` (substitute today's date). `cp` overwrites by default, so a same-day re-run just replaces the snapshot.
 
 The `refresh` sub-command skips step 2 and always runs step 3.
 
@@ -294,7 +286,7 @@ Hygiene items are **always shown to the user** for action — never auto-deleted
 
 ## Constraints
 
-- Never modify files under `~/code/` as part of a queue render or note append. The skill is read-only with respect to project repos.
+- Never modify files under `~/code/` as part of a queue render or note append, **except** when scan.sh auto-archives a complete plan: scan.sh uses `git mv` to move a plan file from `docs/plans/<file>` to `docs/plans/archive/<file>` when all steps are marked ✅, the repo is on a feature branch (not main/master), and the plan file has no pending changes. This staged rename is intentional and must still be committed by the user.
 - Never modify `## User notes` sections on the user's behalf except:
   - Appending via the `note` sub-command.
   - Surfacing a hygiene-flag removal suggestion for the user to confirm.
