@@ -18,10 +18,11 @@ plugins=(git z)
 # User configuration
 
 export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME//.rover/bin:$PATH"
 export NVM_DIR="$HOME/.nvm"
 [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
 [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
-
+export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"     
 source $ZSH/oh-my-zsh.sh
 
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
@@ -58,6 +59,18 @@ alias audio="sudo kextunload /System/Library/Extensions/AppleHDA.kext;sudo kextl
 alias mcis='mci && ./start.sh'
 alias mcic='mvn test jacoco:report'
 alias chmd='chmod +x'
+alias clo="claude --model opus"
+alias cls="claude --model sonnet"
+alias gmp="gemini -m gemini-3.1-pro-preview"
+alias gmf="gemini -m gemini-3-flash-preview"
+# alias ccd="npx tsx ~/code/command-center/src/index.ts briefing -v"
+alias ccd="(cd ~/code/command-center && npx tsx src/index.ts briefing -v)"
+alias cch="cd ~/code/command-center && npx tsx ~/code/command-center/src/index.ts habits"
+alias ccr="cd ~/code/command-center && npx tsx scripts/retro-collect.ts --run"
+# alias ccw="npx tsx src/index.ts weekly -v"
+# alias cc7="npx tsx src/index.ts seven -v"
+# alias ccm="npx tsx src/index.ts monthly -v"
+# alias cc30="npx tsx src/index.ts thirty -v"
 
 stty -ixon
 
@@ -72,3 +85,4 @@ function code {
         open -a "Visual Studio Code" "$argPath"
     fi
 }
+
