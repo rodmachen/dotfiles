@@ -48,7 +48,7 @@ Effort applies to Opus and Sonnet only. Haiku has no effort configuration — om
 | Model | Valid levels | Default |
 |---|---|---|
 | Opus 4.7 | `low`, `medium`, `high`, `xhigh`, `max` | `xhigh` |
-| Sonnet 4.6 | `low`, `medium`, `high`, `max` | `high` (or `medium` on Pro/Max) |
+| Sonnet 4.6 | `low`, `medium`, `high`, `max` | `high` |
 | Haiku 4.5 | none | n/a — fixed capability |
 
 Use `--effort` as a CLI flag on the subprocess invocation:
@@ -141,7 +141,14 @@ For each batch:
 
 ## Phase 4: Review Agent
 
-After all execution batches complete, create a Review Task, then spawn an Opus subagent at xhigh effort:
+After all execution batches complete:
+
+1. **Write `prompts/review.md`** with:
+   - The full PR diff (output of `git diff main`)
+   - The full contents of `context.md`
+   - Instruction: *"Review these changes. For each issue found, output a JSON array where each item has: `severity` (`blocking` or `non-blocking`), `location` (file and line if applicable), `description` (what the issue is), and `suggestion` (recommended fix). Write the array to the path specified."*
+
+2. **Create a Review Task**, then spawn an Opus subagent at xhigh effort:
 
 ```bash
 claude --model opus --effort xhigh \
@@ -150,8 +157,7 @@ claude --model opus --effort xhigh \
   --output-format json > docs/implementation/{plan-name}/results/review.json
 ```
 
-- **Input**: PR diff (via `git diff main`) + full `context.md`
-- **Output**: structured JSON written to `review.md`
+3. **Parse `results/review.json`** and write a human-readable summary to `review.md`.
 
 Each review item must include:
 - `severity`: `blocking` or `non-blocking`
@@ -163,13 +169,21 @@ Each review item must include:
 
 ## Phase 5: Feedback Agent
 
-Create a Feedback Task, then spawn a Sonnet subagent with `--allowedTools "Bash,Write,Edit,Read"`:
+1. **Write `prompts/feedback.md`** with:
+   - The full contents of `review.md`
+   - The relevant source files identified in the review items
+   - Instruction: *"Address every `blocking` review item. Address `non-blocking` items with best judgment; defer only with a clear reason. Write a feedback-report.md to the path specified listing: what was changed, what was deferred and why, and any new issues surfaced during fixes. Do not ask for confirmation — execute directly."*
 
-- **Input**: `review.md` + relevant source files
-- **Task**:
-  - Address every `blocking` item
-  - Address `non-blocking` items with best judgment; defer only with a clear reason
-- **Output**: `feedback-report.md` listing what was changed, what was deferred and why, and any new issues surfaced during fixes
+2. **Create a Feedback Task**, then spawn a Sonnet subagent at high effort:
+
+```bash
+claude --model sonnet --effort high \
+  --allowedTools "Bash,Write,Edit,Read" \
+  -p "$(cat docs/implementation/{plan-name}/prompts/feedback.md)" \
+  --output-format json > docs/implementation/{plan-name}/results/feedback.json
+```
+
+3. **Parse `results/feedback.json`** and confirm `feedback-report.md` was written.
 
 ---
 
