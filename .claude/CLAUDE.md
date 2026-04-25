@@ -12,6 +12,10 @@ Plan mode is **not** required for:
 
 When in doubt, ask before planning.
 
+## Tone
+
+Write plainly and precisely. No humor, wit, or colloquialisms. Avoid informal expressions like "in anger", "clobber", "nuke", or anything that reads as clever or playful. State facts and decisions directly.
+
 ## Effort Levels
 
 Available effort levels (verify against Anthropic docs when a new model releases — see "Keeping this current" below):
@@ -48,6 +52,10 @@ When a new Claude model ships (Sonnet 4.7, Opus 4.8, Haiku 5, etc.), check Anthr
 - After saving the plan file, **present the filename and wait for confirmation or a new name** before committing.
 - After the plan is committed, **always prompt the user to clear context** before implementation begins.
 
+## Multi-Agent Orchestration
+
+When `/multi-agent-plan <plan-file>` is invoked, the orchestrator executes the existing plan — it does **not** create a second plan file. Do not write a new file under `docs/plans/` for the orchestration (no "orchestration plan", no `docs-plans-*-clever-lamport.md`-style companion). Orchestration artifacts (context log, prompts, per-batch results, review, feedback) live under `docs/implementation/<plan-slug>/` only. The input plan file is the single source of truth for scope and steps; the orchestrator reads it, batches steps, and spawns subagents — nothing more gets committed to `docs/plans/`.
+
 ## Project Initialization
 
 Before implementation begins:
@@ -66,7 +74,7 @@ Before implementation begins:
   4. **Prior steps complete**: All previous steps done with verification passed.
   5. **PR status**: If at least one implementation commit has been pushed, the PR exists.
 - **One feature branch, one PR, atomic commits per plan step.** Do not split a feature across multiple PRs — if scope is too large, revisit the plan instead.
-- Open the PR after the first implementation commit.
+- Open the PR after the first implementation commit. **Never use draft PRs** — always open a reviewable PR unless explicitly told to use draft mode.
 - Each step: implement with tests, verify, commit, push, mark step complete in the plan file, update PR description.
 
 ### Commit Messages

@@ -67,6 +67,8 @@ alias gmf="gemini -m gemini-3-flash-preview"
 alias ccd="(cd ~/code/command-center && npx tsx src/index.ts briefing -v)"
 alias cch="cd ~/code/command-center && npx tsx ~/code/command-center/src/index.ts habits"
 alias ccr="cd ~/code/command-center && npx tsx scripts/retro-collect.ts --run"
+alias ccp="cd ~/code/command-center && npx tsx src/index.ts pomodoro"
+
 # alias ccw="npx tsx src/index.ts weekly -v"
 # alias cc7="npx tsx src/index.ts seven -v"
 # alias ccm="npx tsx src/index.ts monthly -v"
