@@ -49,7 +49,13 @@ When a new Claude model ships (Sonnet 4.7, Opus 4.8, Haiku 5, etc.), check Anthr
   - A **context-clear** flag (yes/no): yes when the step starts a logically distinct chapter, or when prior output would be more noise than signal.
   - Which **files** will be modified.
   - Whether the step is **TDD** or **tests-alongside** (see Testing).
-- After saving the plan file, **present the filename and wait for confirmation or a new name** before committing.
+- Every plan must begin with a **Step 0: Branch, rename, and first commit**:
+  1. Propose a human-readable plan filename (kebab-case, descriptive, e.g., `phase-3-bulk-meta-generation.md`).
+  2. Wait for user confirmation or a corrected name.
+  3. Create the feature branch.
+  4. Rename the plan file to the confirmed name and commit it as the sole change in the first commit on the branch.
+  5. Push and open the PR immediately after this commit.
+  - Step 0 requires no model/effort/TDD declaration. It is always Sonnet / low, tests-alongside (no tests), context-clear: no.
 - After the plan is committed, **always prompt the user to clear context** before implementation begins.
 
 ## Multi-Agent Orchestration
@@ -140,6 +146,9 @@ When a code review produces actionable improvements (Opus review, PR comments, e
 2. Update or add tests as needed.
 3. Verify (type check + tests pass).
 4. **Initiate the commit flow without waiting to be asked** — follows the standard commit workflow, with the message referencing the review.
+5. Every batch of review changes — no matter how small — must produce a distinct commit with message "Fix review feedback: <brief summary>" and be pushed to the PR branch before closing the review.
+
+Every plan must include a final **"Fix review feedback"** step as its last numbered step. It covers the review → implement → commit cycle and is marked complete only after the feedback commit is pushed.
 
 ## Post-Merge Cleanup
 
