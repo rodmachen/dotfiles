@@ -110,6 +110,11 @@ symlink "$DOTFILES_DIR/.zshrc"             "$HOME/.zshrc"
 symlink "$DOTFILES_DIR/.gitconfig"         "$HOME/.gitconfig"
 symlink "$DOTFILES_DIR/.gitignore_global"  "$HOME/.gitignore_global"
 
+# Oh My Zsh custom theme
+ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+mkdir -p "$ZSH_CUSTOM/themes"
+symlink "$DOTFILES_DIR/themes/rodsto.zsh-theme" "$ZSH_CUSTOM/themes/rodsto.zsh-theme"
+
 # Claude Code skills
 mkdir -p "$HOME/.claude/skills"
 symlink "$DOTFILES_DIR/.claude/skills/work-log" "$HOME/.claude/skills/work-log"
